@@ -20,7 +20,7 @@
 # CONFIGURATION
 PLUGIN_UPLOAD = $(CURDIR)/plugin_upload.py
 
-QGISDIR=.qgis2
+QGISDIR=.qgis3
 
 # Makefile for a PyQGIS plugin
 
@@ -48,10 +48,10 @@ default: compile
 compile: $(UI_FILES) $(RESOURCE_FILES)
 
 %_rc.py : %.qrc
-	pyrcc4 -o $*_rc.py  $<
+	pyrcc5 -o $*_rc.py  $<
 
 %.py : %.ui
-	pyuic4 -o $@ $<
+	pyuic5 -o $@ $<
 
 %.qm : %.ts
 	lrelease $<
@@ -100,7 +100,7 @@ upload: zip
 # transup
 # update .ts translation files
 transup:
-	pylupdate4 Makefile
+	pylupdate5 Makefile
 
 # transcompile
 # compile translation files into .qm binary format
