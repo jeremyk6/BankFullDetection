@@ -21,13 +21,14 @@
 """
 
 import os
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from ui_bankfulldetection import Ui_BankFullDetection
+from qgis.PyQt.QtCore import *
+from qgis.PyQt.QtGui import *
+from qgis.PyQt.QtWidgets import *
+from .ui_bankfulldetection import Ui_BankFullDetection
 from qgis.core import *
-from tools.XSGenerator import *
-from tools.profiler import ProfilerTool
-from tools.BankElevationDetection import mainFun
+from .tools.XSGenerator import *
+from .tools.profiler import ProfilerTool
+from .tools.BankElevationDetection import mainFun
 
 
 class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
@@ -53,20 +54,20 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
         
         #~ connections
         #~ self.iface.clicked.connect(self.runXS)
-        QObject.connect(self.genXSbtn, SIGNAL( "clicked()" ), self.genXS)
-        QObject.connect(self.buttonProf, SIGNAL( "clicked()" ), self.runProfile)
-        QObject.connect(self.ShpSaveBtn, SIGNAL( "clicked()" ), self.writeLayer)
-        QObject.connect(self.selXS, SIGNAL( "clicked()" ), self.runProfileXS)
+        self.genXSbtn.clicked.connect(self.genXS)
+        self.buttonProf.clicked.connect(self.runProfile)
+        self.ShpSaveBtn.clicked.connect(self.writeLayer)
+        self.selXS.clicked.connect(self.runProfileXS)
 
 
     def setup_gui(self):
         """ Function to combos creation """
         self.comboVector.clear()
         self.comboDEM.clear()
-        curr_map_layers = QgsMapLayerRegistry.instance().mapLayers()
+        curr_map_layers = QgsProject.instance().mapLayers()
         layerRasters = []
         layerVectors = []
-        for name, layer in curr_map_layers.iteritems():
+        for layer in curr_map_layers.values():
             if layer.type() == QgsMapLayer.VectorLayer:
                 layerVectors.append(unicode(layer.name()))
             elif layer.type() == QgsMapLayer.RasterLayer:
@@ -75,7 +76,7 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
         self.comboVector.addItems( layerVectors )
         
     def getLayerByName(self,LayerName):
-        layer = QgsMapLayerRegistry.instance().mapLayersByName(LayerName)[0]
+        layer = QgsProject.instance().mapLayersByName(LayerName)[0]
         return layer
 
         
@@ -126,9 +127,9 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
         vl = QgsVectorLayer("Polygon", self.vlName, "memory")
         pr = vl.dataProvider()
         fet = QgsFeature()
-        fet.setGeometry( QgsGeometry.fromPolygon( [ ringPoints ] ) )
+        fet.setGeometry( QgsGeometry.fromPolygonXY( [ ringPoints ] ) )
         pr.addFeatures( [fet] )
-        QgsMapLayerRegistry.instance().addMapLayer(vl)
+        QgsProject.instance().addMapLayer(vl)
         
         #check if output file is selected
         shapefilename = self.ShpSaveLine.text()
@@ -136,7 +137,7 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
             QMessageBox.critical(self.iface.mainWindow(),QCoreApplication.translate( "message","Error"), QCoreApplication.translate( "message","You have to select output file first"))
         else:
             #~ save vector layer to shapefile
-            error = QgsVectorFileWriter.writeAsVectorFormat(vl, shapefilename, "CP1250", None, "ESRI Shapefile")
+            error = QgsVectorFileWriter.writeAsVectorFormat(vl, shapefilename, "CP1250", vl.sourceCrs(), "ESRI Shapefile")
             if error == QgsVectorFileWriter.NoError:
                 QMessageBox.information( self.iface.mainWindow(),"Info",
                 str("File %s " %(str(unicode(vl.name())).upper())) + QCoreApplication.translate( "message","succesfully saved"))
@@ -153,7 +154,7 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
         self.vlName = os.path.splitext(base)[0]
         
     def runProfileXS(self):
-        from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
+        from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
         #~ take input parameters fron GUI
         rasterName = self.comboDEM.currentText()

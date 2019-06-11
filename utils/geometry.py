@@ -5,7 +5,7 @@ def mag(point):
     return math.sqrt(point.x()**2 + point.y()**2)
  
 def dist(point1,point2):
-    return math.sqrt(point1.sqrDist(point2))
+    return math.sqrt(point1.distanceSquared(point2))
  
 def diff(point2, point1):
     return QgsPoint(point2.x()-point1.x(), point2.y() - point1.y())

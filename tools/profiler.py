@@ -1,6 +1,6 @@
 import math
 from osgeo import ogr,_ogr
-from qgis.core import QgsPoint,QgsRaster,QgsRectangle
+from qgis.core import QgsRaster,QgsRectangle, QgsPointXY
 #from BankFullDetection.utils import log
 
 
@@ -37,7 +37,7 @@ class ProfilerTool():
                 i = 0
                 for point in points:
                     #log('X: %s' % point[0])
-                    p = QgsPoint(point[0],point[1])
+                    p = QgsPointXY(point[0],point[1])
                     if self._isInExtent(point):
                         identifyresult = self.provider.identify(p,self.identifyFormat,self.identifyRect)
                         results = identifyresult.results()
@@ -46,13 +46,13 @@ class ProfilerTool():
                         if results and (len(results) > 0):
                             if prevPoint:
                                 dist += math.sqrt(prevPoint.sqrDist(p))
-                            prevPoint = QgsPoint(p)
+                            prevPoint = QgsPointXY(p)
                             val = results[1]
                             profile.append((dist,val))
 #                            profile.append({'x':point[0],'y':point[1],'dist':dist,'z':val})
                         identifyresult = None
 #                log('Punti processati: %s' % i)
-            except Exception,e:
+            except Exception as e:
                 err = e
         else:
             err = 'The geometry is not a linestring'

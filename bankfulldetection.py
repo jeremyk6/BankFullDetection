@@ -20,13 +20,14 @@
  ***************************************************************************/
 """
 # Import the PyQt and QGIS libraries
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from qgis.PyQt.QtCore import *
+from qgis.PyQt.QtGui import *
+from qgis.PyQt.QtWidgets import *
 from qgis.core import *
 # Initialize Qt resources from file resources.py
-import resources_rc
+from . import resources_rc
 # Import the code for the dialog
-from bankfulldetectiondialog import BankFullDetectionDialog
+from .bankfulldetectiondialog import BankFullDetectionDialog
 import os.path
 
 

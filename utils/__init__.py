@@ -1,4 +1,4 @@
-from PyQt4.QtGui import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import *
 
 def log(msg):
@@ -32,7 +32,7 @@ class MemoryLayer(object):
         
     def add_point(self,point):
         self.seg = QgsFeature()
-        self.seg.setGeometry(QgsGeometry.fromPoint(point))
+        self.seg.setGeometry(point)
         self.pr.addFeatures([self.seg])
         self.layer.updateExtents()
         
@@ -49,4 +49,4 @@ class MemoryLayer(object):
         self.layer.updateExtents()
     
     def loadme(self):
-        QgsMapLayerRegistry.instance().addMapLayers([self.layer])
+        QgsProject.instance().addMapLayers([self.layer])

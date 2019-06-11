@@ -20,9 +20,9 @@
  ***************************************************************************/
 """
 from qgis.core import (QgsFeature, QgsGeometry,
-                        QgsVectorLayer, QgsMapLayerRegistry,
+                        QgsVectorLayer, QgsProject,
                         QgsField)
-from PyQt4.QtCore import QVariant,QCoreApplication
+from qgis.PyQt.QtCore import QVariant,QCoreApplication
 from qgis.utils import iface
 import numpy as np
 from BankFullDetection.utils import *
@@ -60,7 +60,7 @@ def pointsAlongLine(distance):
         pr.addFeatures(features)
         vl.updateExtents()
 
-    QgsMapLayerRegistry.instance().addMapLayer(vl)
+    QgsProject.instance().addMapLayer(vl)
     
 def create_points_secs(layer,step=1000,sez_length=1000):
         '''

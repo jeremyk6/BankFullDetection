@@ -23,5 +23,5 @@
 
 def classFactory(iface):
     # load BankFullDetection class from file BankFullDetection
-    from bankfulldetection import BankFullDetection
+    from .bankfulldetection import BankFullDetection
     return BankFullDetection(iface)

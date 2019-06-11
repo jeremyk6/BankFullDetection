@@ -27,8 +27,9 @@ from shapely.geometry import Polygon
 from shapely.geometry import box
 from shapely.geometry import LineString
 import numpy as np
+import tempfile
 
-from spline_withR import runAlg as splineR
+from .spline_withR import runAlg as splineR
 
 def WTable(polygon,h):
     minx, miny, maxx, maxy=polygon.bounds
@@ -46,7 +47,7 @@ def diff_n(Harray,locMax,dist):
     rightIndex = min(locMax + dist, len(Harray)-1)
     lGrad = Harray[locMax] - Harray[leftIndex]
     rGrad = Harray[rightIndex] - Harray[locMax]
-    if ((cmp(lGrad,0)>0) & (cmp(rGrad,0)<0) & (lGrad != rGrad)):
+    if ((lGrad>0) & (rGrad<0) & (lGrad != rGrad)):
         return True
     else:
         return False
@@ -65,7 +66,7 @@ def local_maxmin(Harray):
     #--
     for i in gradients[:-1]:
         count+=1
-        if ((cmp(i,0)>0) & (cmp(gradients[count],0)<0) & (i != gradients[count])):
+        if ((i>0) & (gradients[count]<0) & (i != gradients[count])):
             maxima_num+=1
             max_locations.append(count)     
             #new method
@@ -73,7 +74,7 @@ def local_maxmin(Harray):
                rank += 1
             ranks.append(rank)
             #--
-        if ((cmp(i,0)<0) & (cmp(gradients[count],0)>0) & (i != gradients[count])):
+        if ((i<0) & (gradients[count]>0) & (i != gradients[count])):
             minima_num+=1
             min_locations.append(count)
     turning_points = {'maxima_number':maxima_num,'minima_number':minima_num,'maxima_locations':max_locations,'minima_locations':min_locations,
@@ -167,7 +168,7 @@ def mainFun(pointList,nVsteps=100,minVdep=1,Graph=0):
         #~ definition of figure for XS plot
         from matplotlib import pyplot
         from descartes.patch import PolygonPatch
-        from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+        from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
         
         
         fig = pyplot.figure(1, figsize=(4,3), dpi=300)
@@ -203,7 +204,7 @@ def mainFun(pointList,nVsteps=100,minVdep=1,Graph=0):
 
     else:
         #~ write some useful information to csv file
-        filecsv = open("/tmp/test.csv","a")
+        filecsv = open(tempfile.gettempdir()+"/test.csv","a")
         filecsv.write(str(wetArea.bounds[2]-wetArea.bounds[0]))     #bankfull width
         filecsv.write(',')                              
         filecsv.write(nchannel)                     #n channels
