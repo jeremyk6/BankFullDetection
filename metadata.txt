@@ -9,9 +9,9 @@
 
 
 [general]
-name=QFluvial
-qgisMinimumVersion=2.0
-description=Fluvial geomophological tool
+name=Bankfull width detection
+qgisMinimumVersion=3.0
+description=Automatic bankfull width detection
 version=0.1
 author=Pierluigi De Rosa
 email=pierluigi.derosa@gmail.com
