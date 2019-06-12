@@ -41,49 +41,6 @@ def hdepth(polygon,h):
     b = box(minx, miny, maxx, h)
     return b
 
-#~ new function for new method for selecting local maxima
-def diff_n(Harray,locMax,dist):
-    leftIndex = max(locMax-dist,0)
-    rightIndex = min(locMax + dist, len(Harray)-1)
-    lGrad = Harray[locMax] - Harray[leftIndex]
-    rGrad = Harray[rightIndex] - Harray[locMax]
-    if ((lGrad>0) & (rGrad<0) & (lGrad != rGrad)):
-        return True
-    else:
-        return False
-#~ --
-
-def local_maxmin(Harray):
-    gradients=np.diff(Harray)
-    maxima_num=0
-    minima_num=0
-    max_locations=[]
-    min_locations=[]
-    count=0
-    #new methods
-    ranks = []
-    rank = 1
-    #--
-    for i in gradients[:-1]:
-        count+=1
-        if ((i>0) & (gradients[count]<0) & (i != gradients[count])):
-            maxima_num+=1
-            max_locations.append(count)     
-            #new method
-            while (diff_n(Harray,count,rank) and rank<len(Harray)):
-               rank += 1
-            ranks.append(rank)
-            #--
-        if ((i<0) & (gradients[count]>0) & (i != gradients[count])):
-            minima_num+=1
-            min_locations.append(count)
-    turning_points = {'maxima_number':maxima_num,'minima_number':minima_num,'maxima_locations':max_locations,'minima_locations':min_locations,
-                      #new method
-                      'maxima_ranks': ranks
-                      #--
-    }  
-    return turning_points
-
 def mainFun(pointList,nVsteps=100,minVdep=1,Graph=0):
     polygonXSorig = Polygon(pointList)
     #~ definition line of XS
@@ -137,20 +94,6 @@ def mainFun(pointList,nVsteps=100,minVdep=1,Graph=0):
         bankfullLine = WTable(polygonXSorig,depts[-1])
         wdep=hdepth(polygonXSorig,depts[-1])
     
-    #~ new method
-    turning_points = local_maxmin(HydDept)
-    terrace = [] 
-    for i in range(len(turning_points['maxima_locations'])):
-        if turning_points['maxima_ranks'][i] == max(turning_points['maxima_ranks'])  :
-            terrace.append(turning_points['maxima_locations'][i])  
-    #~ max_loc_filtered = [i for i in max_loc_filtered if HydDept[i] > minVdep] 
-    #~ --
-    #~ shapely polygon for terrace
-    terraceIndex=terrace[0]
-    terraceLine=WTable(polygonXSorig,depts[terraceIndex])
-    tdep=hdepth(polygonXSorig,depts[terraceIndex])
-    tArea = polygonXS.intersection(tdep)
-    
     wetArea = polygonXS.intersection(wdep)
     boundsOK = ()
     Area = 0
@@ -175,10 +118,8 @@ def mainFun(pointList,nVsteps=100,minVdep=1,Graph=0):
         fig = pyplot.figure()
         ax = fig.add_subplot(211)
         ax.clear()
-        #~ plot_coords(ax, borderXS,'#999999')         # plot single points on XS
         plot_line(ax,borderXS,'#6699cc')               # plot line of XS
         plot_line(ax,bankfullLine,'#0000F5')           # plot hor line of bankfull
-        #~ plot_line(ax,terraceLine,'#FFE066')           # plot hor line of terrace
         ax.set_title('Cross Section')
         if wetArea.type is 'MultiPolygon':
             for wetPolygon in wetArea:
@@ -220,16 +161,6 @@ def mainFun(pointList,nVsteps=100,minVdep=1,Graph=0):
         
         return boundsOK[0],boundsOK[2] #,len(wetArea),wetArea.area, wetArea.length
 
-def plot_coords(ax, ob,Ncolor):
-    x, y = ob.xy
-    ax.plot(x, y, 'o', color=Ncolor, zorder=1)
-
 def plot_line(ax, ob,Ncolor):
     x, y = ob.xy
     ax.plot(x, y, color=Ncolor, alpha=0.7, linewidth=3, solid_capstyle='round', zorder=2)
-
-def plot_lines(ax, ob,Ncolor):
-    for line in ob:
-        x, y = line.xy
-        ax.plot(x, y, color=Ncolor, alpha=0.7, linewidth=3, solid_capstyle='round', zorder=2)
-
