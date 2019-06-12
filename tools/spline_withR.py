@@ -122,6 +122,9 @@ def runAlg(depts,HydDept):
                
             # check for convergence for newtonraphson method  
             check=TRUE
+            nb_it=0
+            stat=FALSE
+            out = matrix(NA, nrow = 0, ncol = 2) 
             while (check)
             {
               cv = cv.smooth.spline(x, y,plot=F)
@@ -142,18 +145,27 @@ def runAlg(depts,HydDept):
                 {
                   local.max = xsol[which(predict(fit, xsol, deriv=2)$y < 0)]
                   out = matrix(sapply(predict(fit, local.max), cbind), ncol = 2)
-                  check=FALSE
+                  if(identical(local.max, numeric(0))==FALSE)
+                  {
+                    check=FALSE
+                  }
                 }   
               } else 
               { 
                 out = matrix(NA, nrow = 0, ncol = 2) 
                 check=FALSE
               }
+              nb_it = nb_it+1
+              if(nb_it==50 && check==TRUE)
+              {
+                stat=TRUE
+                check=FALSE
+              }
             }
             
 
             # out is a matrix of (x,y) values at each local maxima
-            return(list(out,cv$spar1se))
+            return(list(stat,out,cv$spar1se))
             }
             
             ''')
@@ -161,14 +173,14 @@ def runAlg(depts,HydDept):
     
     definitiveFunc = robjects.globalenv['definitiveFunc']
     #converto gli array python in vettori R
-    out,spar = definitiveFunc(x,y)
+    stat,out,spar = definitiveFunc(x,y)
     
     if type(out) == robjects.vectors.FloatVector:
-        return [out[0]] , [out[1]], spar[0]
+        return stat[0] , [out[0]] , [out[1]], spar[0]
     else:
         if len(out) > 0:
-            return list(out.rx(True,1)) , list(out.rx(True,2)) , spar[0]
+            return stat[0] , list(out.rx(True,1)) , list(out.rx(True,2)) , spar[0]
         else:
-            return [x[-1]],[y[-1]] , spar[0]
+            return stat[0] , [x[-1]],[y[-1]] , spar[0]
     
     

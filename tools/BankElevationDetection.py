@@ -68,7 +68,7 @@ def mainFun(pointList,nVsteps=100,minVdep=1,Graph=0):
     
     #smoothing function
     #estract local maxima of HydDept and depts using smoothing function in R
-    deptsLM, HydDeptLM , spar  = splineR(depts,HydDept)
+    error, deptsLM, HydDeptLM , spar  = splineR(depts,HydDept)
     from scipy.interpolate import UnivariateSpline
     splHydDept= UnivariateSpline(depts, HydDept)
     splHydDept.set_smoothing_factor(spar)
@@ -78,16 +78,27 @@ def mainFun(pointList,nVsteps=100,minVdep=1,Graph=0):
     HydDept_smthfine= splHydDept(xfine)
     
     #~ first maxima location of HydDept
-
-    if len(deptsLM)>0:
+    err = 0
+    if len(deptsLM)>0 and not error:
         #~ skip local maxima_locations if lower then value set by user
         #~ previous method now replaced
-        max_loc_filtered = [i for i in range(len(HydDeptLM)) if HydDeptLM[i] >= minVdep] 
+        max_loc_filtered = []
+        for i in range(len(HydDeptLM)):
+            try:
+                if HydDeptLM[i] >= minVdep:
+                    max_loc_filtered.append(i)
+            except:
+                pass
         
         #~ shapely polygon for bankfull
-        bankfullIndex = max_loc_filtered[0]
-        bankfullLine = WTable(polygonXSorig,deptsLM[bankfullIndex])
-        wdep=hdepth(polygonXSorig,deptsLM[bankfullIndex])
+        if(len(max_loc_filtered) > 0):
+            bankfullIndex = max_loc_filtered[0]
+            bankfullLine = WTable(polygonXSorig,deptsLM[bankfullIndex])
+            wdep=hdepth(polygonXSorig,deptsLM[bankfullIndex])
+        else:
+            err = 1
+            bankfullLine = WTable(polygonXSorig,depts[-1])
+            wdep=hdepth(polygonXSorig,depts[-1])
         
 
     else:
@@ -159,7 +170,7 @@ def mainFun(pointList,nVsteps=100,minVdep=1,Graph=0):
         filecsv.write(str(wetArea.bounds[3]))                #min height
         filecsv.write('\n')
         
-        return boundsOK[0],boundsOK[2] #,len(wetArea),wetArea.area, wetArea.length
+        return boundsOK[0],boundsOK[2], err #,len(wetArea),wetArea.area, wetArea.length
 
 def plot_line(ax, ob,Ncolor):
     x, y = ob.xy

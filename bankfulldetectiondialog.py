@@ -111,10 +111,13 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
             #~ feat = feats[0]
             geom = feat.geometry()
             profileList,e = profiler.doProfile(geom)
-            self.iface.mainWindow().statusBar().showMessage( "Elaboro la sez "+str(i) )
-            try:
-                startDis, endDis = mainFun(profileList,nVsteps,minVdep,Graph=0)
-                
+            self.iface.mainWindow().statusBar().showMessage( "Elaboro la sez "+str(i+1) )
+            startDis, endDis, err = mainFun(profileList,nVsteps,minVdep,Graph=0)
+            
+            if err == 1:
+                print("Valeur candidate inférieure à la profondeur min sur %s"%str(i+1))
+            else:
+                if((geom.length()-endDis)<1) : endDis = geom.length() # rustine
                 StartPoint = geom.interpolate( startDis)
                 EndPoint = geom.interpolate(endDis)
                 
@@ -122,8 +125,6 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
                 rightPoints.append(EndPoint.asPoint() )
                 #~ rightPoints reversing
                 ringPoints = leftPoints+rightPoints[::-1]
-            except:
-                print("error on %s"%i)
             i = i +1 
             self.progressBar.setValue(i)
         
