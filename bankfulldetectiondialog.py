@@ -112,15 +112,18 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
             geom = feat.geometry()
             profileList,e = profiler.doProfile(geom)
             self.iface.mainWindow().statusBar().showMessage( "Elaboro la sez "+str(i) )
-            startDis, endDis = mainFun(profileList,nVsteps,minVdep,Graph=0)
-            
-            StartPoint = geom.interpolate( startDis)
-            EndPoint = geom.interpolate(endDis)
-            
-            leftPoints.append(StartPoint.asPoint() )
-            rightPoints.append(EndPoint.asPoint() )
-            #~ rightPoints reversing
-            ringPoints = leftPoints+rightPoints[::-1]
+            try:
+                startDis, endDis = mainFun(profileList,nVsteps,minVdep,Graph=0)
+                
+                StartPoint = geom.interpolate( startDis)
+                EndPoint = geom.interpolate(endDis)
+                
+                leftPoints.append(StartPoint.asPoint() )
+                rightPoints.append(EndPoint.asPoint() )
+                #~ rightPoints reversing
+                ringPoints = leftPoints+rightPoints[::-1]
+            except:
+                print("error on %s"%i)
             i = i +1 
             self.progressBar.setValue(i)
         
