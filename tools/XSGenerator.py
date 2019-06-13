@@ -72,7 +72,10 @@ def create_points_secs(layer,step=1000,sez_length=1000):
             pt_mid  = MemoryLayer("Punti sezioni", "Point",crs)
             sez  = MemoryLayer(str(QCoreApplication.translate( "dialog","Sezioni")), "LineString",crs)
             #pydevd.settrace()
-            for elem in layer.getFeatures():
+            feats = layer.selectedFeatures()
+            if len(feats) < 1:
+                feats = layer.getFeatures()
+            for elem in feats:
                 line = elem.geometry()
                 line_length = 0
                 part_length = step
