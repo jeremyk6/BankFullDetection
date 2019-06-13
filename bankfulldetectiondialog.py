@@ -90,6 +90,18 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
         #~ message(str(step))
         create_points_secs(layer,step,width)
 
+    def mobileMean(self, l):
+        begin = l[0]
+        end = l[-1]
+        t = []
+        for i in range(len(l)):
+            if i not in [0,len(l)-1]:
+                t.append((l[i-1]+l[i]+l[i+1])/3)
+            elif i == 0:
+                t.append(l[0])
+            else:
+                t.append(l[-1])
+        return t
                 
     def runProfile(self):
         self.progressBar.show()
@@ -127,9 +139,20 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
                 lGeom.append(geom)
             i = i +1 
             self.progressBar.setValue(i)
+        
+        '''
+        SMOOTHING ZONE
+        print("Avant lissage :")
+        print(lDept)
+        lDept = self.mobileMean(lDept)
+        print("Après lissage :")
+        print(lDept)
+        '''
 
         for i in range(nfeats):
-            wetArea = lProfileP[i].intersection(hdepth(lProfileP[i],lDept[i]))
+            minY=lProfileP[i].bounds[1]
+            wetArea = lProfileP[i].intersection(hdepth(lProfileP[i],lDept[i]+minY))
+            #wetArea = lProfileP[i].intersection(hdepth(lProfileP[i],1+minY))
             startDis = wetArea.bounds[0]
             endDis = wetArea.bounds[2]
             if((lGeom[i].length()-endDis)<1) : endDis = lGeom[i].length() # rustine

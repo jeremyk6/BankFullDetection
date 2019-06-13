@@ -80,6 +80,7 @@ def mainFun(pointList,nVsteps=100,minVdep=1,Graph=0):
     #~ first maxima location of HydDept
     err = 0
     dept = 0
+    hDept = 0
     if len(deptsLM)>0 and not error:
         #~ skip local maxima_locations if lower then value set by user
         #~ previous method now replaced
@@ -96,17 +97,20 @@ def mainFun(pointList,nVsteps=100,minVdep=1,Graph=0):
             bankfullIndex = max_loc_filtered[0]
             bankfullLine = WTable(polygonXSorig,deptsLM[bankfullIndex])
             wdep=hdepth(polygonXSorig,deptsLM[bankfullIndex])
+            hDept = HydDeptLM[bankfullIndex]
             dept = deptsLM[bankfullIndex]
         else:
             err = 1
             bankfullLine = WTable(polygonXSorig,depts[-1])
             wdep=hdepth(polygonXSorig,depts[-1])
+            hDept = HydDeptLM[-1]
             dept = depts[-1]
         
 
     else:
         bankfullLine = WTable(polygonXSorig,depts[-1])
         wdep=hdepth(polygonXSorig,depts[-1])
+        hDept = HydDeptLM[-1]
         dept = depts[-1]
     
     wetArea = polygonXS.intersection(wdep)
@@ -174,7 +178,7 @@ def mainFun(pointList,nVsteps=100,minVdep=1,Graph=0):
         filecsv.write(str(wetArea.bounds[3]))                #min height
         filecsv.write('\n')
         
-        return dept, err#boundsOK[0],boundsOK[2], err #,len(wetArea),wetArea.area, wetArea.length
+        return dept-minY, err#boundsOK[0],boundsOK[2], err #,len(wetArea),wetArea.area, wetArea.length
 
 def plot_line(ax, ob,Ncolor):
     x, y = ob.xy
