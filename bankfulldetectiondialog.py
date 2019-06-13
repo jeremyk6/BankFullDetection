@@ -28,7 +28,8 @@ from .ui_bankfulldetection import Ui_BankFullDetection
 from qgis.core import *
 from .tools.XSGenerator import *
 from .tools.profiler import ProfilerTool
-from .tools.BankElevationDetection import mainFun
+from .tools.BankElevationDetection import mainFun, hdepth
+from shapely.geometry import Polygon
 
 
 class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
@@ -107,26 +108,38 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
         self.progressBar.setValue(i)
         nVsteps = self.nVsteps.value()
         minVdep = self.minVdep.value()
+
+        lProfileP = []
+        lDept = []
+        lGeom = []
         for feat in XSlayer.getFeatures():
             #~ feat = feats[0]
             geom = feat.geometry()
             profileList,e = profiler.doProfile(geom)
             self.iface.mainWindow().statusBar().showMessage( "Elaboro la sez "+str(i+1) )
-            startDis, endDis, err = mainFun(profileList,nVsteps,minVdep,Graph=0)
-            
+            dept, err = mainFun(profileList,nVsteps,minVdep,Graph=0)
             if err == 1:
                 print("Valeur candidate inférieure à la profondeur min sur %s"%str(i+1))
+                nfeats -= 1
             else:
-                if((geom.length()-endDis)<1) : endDis = geom.length() # rustine
-                StartPoint = geom.interpolate( startDis)
-                EndPoint = geom.interpolate(endDis)
-                
-                leftPoints.append(StartPoint.asPoint() )
-                rightPoints.append(EndPoint.asPoint() )
-                #~ rightPoints reversing
-                ringPoints = leftPoints+rightPoints[::-1]
+                lProfileP.append(Polygon(profileList))
+                lDept.append(dept)
+                lGeom.append(geom)
             i = i +1 
             self.progressBar.setValue(i)
+
+        for i in range(nfeats):
+            wetArea = lProfileP[i].intersection(hdepth(lProfileP[i],lDept[i]))
+            startDis = wetArea.bounds[0]
+            endDis = wetArea.bounds[2]
+            if((lGeom[i].length()-endDis)<1) : endDis = lGeom[i].length() # rustine
+            StartPoint = lGeom[i].interpolate( startDis)
+            EndPoint = lGeom[i].interpolate(endDis)
+            
+            leftPoints.append(StartPoint.asPoint() )
+            rightPoints.append(EndPoint.asPoint() )
+            #~ rightPoints reversing
+            ringPoints = leftPoints+rightPoints[::-1]
         
         vl = QgsVectorLayer("Polygon", self.vlName, "memory")
         pr = vl.dataProvider()
