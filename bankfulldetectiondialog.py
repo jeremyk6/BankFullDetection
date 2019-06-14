@@ -56,6 +56,7 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
         #~ connections
         #~ self.iface.clicked.connect(self.runXS)
         self.genXSbtn.clicked.connect(self.genXS)
+        self.genLbtn.clicked.connect(self.genLine)
         self.buttonProf.clicked.connect(self.runProfile)
         self.ShpSaveBtn.clicked.connect(self.writeLayer)
         self.selXS.clicked.connect(self.runProfileXS)
@@ -80,7 +81,32 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
         layer = QgsProject.instance().mapLayersByName(LayerName)[0]
         return layer
 
-        
+    def genLine(self):
+        rasterName = self.comboDEM.currentText()
+        self.rLayer = self.getLayerByName(rasterName)
+        profiler = ProfilerTool()
+        profiler.setRaster( self.rLayer )
+        XSlayer = self.getLayerByName(str(QCoreApplication.translate( "dialog","Sezioni")))
+        points = []
+        for feat in XSlayer.getFeatures():
+            geom = feat.geometry()
+            profileList,e = profiler.doProfile(geom)
+            minY = Polygon(profileList).bounds[1]
+            dis = 0
+            for dis, dept in profileList:
+                if dept == minY:
+                    break
+            pGeom = geom.interpolate(dis)
+            if not pGeom.isNull():
+                points.append(pGeom.asPoint())
+        vl = QgsVectorLayer("LineString", "River line", "memory")
+        pr = vl.dataProvider()
+        fet = QgsFeature()
+        fet.setGeometry( QgsGeometry.fromPolylineXY( points ) )
+        pr.addFeatures( [fet] )
+        QgsProject.instance().addMapLayer(vl)
+            
+
                 
     def genXS(self):
         vectorName = self.comboVector.currentText()
