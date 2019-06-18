@@ -41,7 +41,7 @@ def hdepth(polygon,h):
     b = box(minx, miny, maxx, h)
     return b
 
-def mainFun(pointList,nVsteps=100,minVdep=1,Graph=0):
+def mainFun(pointList,nVsteps=100,minVdep=1,firstSlope=False,Graph=0):
     polygonXSorig = Polygon(pointList)
     #~ definition line of XS
     borderXS = LineString(pointList)
@@ -68,19 +68,35 @@ def mainFun(pointList,nVsteps=100,minVdep=1,Graph=0):
     
     #smoothing function
     #estract local maxima of HydDept and depts using smoothing function in R
-    error, deptsLM, HydDeptLM , spar  = splineR(depts,HydDept)
+    spar = 0
+    deptsLM = []
+    HydDeptLM = []
+    error = False
     from scipy.interpolate import UnivariateSpline
     splHydDept= UnivariateSpline(depts, HydDept)
     splHydDept.set_smoothing_factor(spar)
     HydDept_smth=splHydDept(depts)
-    
     xfine = np.linspace(min(depts),max(depts),1000)
     HydDept_smthfine= splHydDept(xfine)
+    if firstSlope :
+        xfine = np.linspace(min(depts),max(depts),len(HydDept))
+        HydDept_smthfine= HydDept
+        gradients=np.diff(HydDept)
+        count = 0
+        for i in gradients[:-1]:
+            count+=1
+            #if ((i>0) & (gradients[count]<0) & (i != gradients[count])):
+            if(((abs(gradients[count]-i)>0.015) or ((i>0) & (gradients[count]<0))) and (i != gradients[count])):
+                deptsLM.append(depts[count])
+                HydDeptLM.append(HydDept[count])
+                break
+
+    else:
+        error, deptsLM, HydDeptLM , spar  = splineR(depts,HydDept)
     
     #~ first maxima location of HydDept
     err = 0
     dept = 0
-    hDept = 0
     if len(deptsLM)>0 and not error:
         #~ skip local maxima_locations if lower then value set by user
         #~ previous method now replaced
@@ -97,20 +113,17 @@ def mainFun(pointList,nVsteps=100,minVdep=1,Graph=0):
             bankfullIndex = max_loc_filtered[0]
             bankfullLine = WTable(polygonXSorig,deptsLM[bankfullIndex])
             wdep=hdepth(polygonXSorig,deptsLM[bankfullIndex])
-            hDept = HydDeptLM[bankfullIndex]
             dept = deptsLM[bankfullIndex]
         else:
             err = 1
             bankfullLine = WTable(polygonXSorig,depts[-1])
             wdep=hdepth(polygonXSorig,depts[-1])
-            hDept = HydDeptLM[-1]
             dept = depts[-1]
         
 
     else:
         bankfullLine = WTable(polygonXSorig,depts[-1])
         wdep=hdepth(polygonXSorig,depts[-1])
-        hDept = HydDeptLM[-1]
         dept = depts[-1]
     
     wetArea = polygonXS.intersection(wdep)

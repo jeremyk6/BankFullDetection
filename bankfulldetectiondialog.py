@@ -147,6 +147,8 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
         nVsteps = self.nVsteps.value()
         minVdep = self.minVdep.value()
 
+        firstSlope = self.chbSlopeLim.isChecked()
+
         lProfileP = []
         lDept = []
         lGeom = []
@@ -155,7 +157,7 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
             geom = feat.geometry()
             profileList,e = profiler.doProfile(geom)
             self.iface.mainWindow().statusBar().showMessage( "Elaboro la sez "+str(i+1) )
-            dept, err = mainFun(profileList,nVsteps,minVdep,Graph=0)
+            dept, err = mainFun(profileList,nVsteps,minVdep,firstSlope,Graph=0)
             if err == 1:
                 print("Valeur candidate inférieure à la profondeur min sur %s"%str(i+1))
                 nfeats -= 1
@@ -230,11 +232,12 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
         profiler = ProfilerTool()
         profiler.setRaster( self.rLayer )
         layer = self.iface.activeLayer()
+        firstSlope = self.chbSlopeLim.isChecked()
         if layer.selectedFeatureCount() == 1:
             feat = layer.selectedFeatures()[0]
             geomSinXS = feat.geometry()
             profileList,e = profiler.doProfile(geomSinXS)
-            canvasPlot = mainFun(profileList,nVsteps,minVdep,Graph=1)
+            canvasPlot = mainFun(profileList,nVsteps,minVdep,firstSlope,Graph=1)
             self.clearLayout(self.layout_plot)
             toolbar = NavigationToolbar(canvasPlot,self.layout_plot.widget())
             #~ self.layout_plot.insertWidget(0, canvasPlot )
