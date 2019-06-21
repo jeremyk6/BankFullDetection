@@ -60,6 +60,7 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
         self.buttonProf.clicked.connect(self.runProfile)
         self.ShpSaveBtn.clicked.connect(self.writeLayer)
         self.selXS.clicked.connect(self.runProfileXS)
+        self.plotBtn.clicked.connect(self.runValidation)
 
 
     def setup_gui(self):
@@ -243,6 +244,59 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
             #~ self.layout_plot.insertWidget(0, canvasPlot )
             self.layout_plot.addWidget( canvasPlot )
             self.layout_plot.addWidget( toolbar )
+            #~ self.setLayout( self.layout_plot)
+            
+        else:
+            QMessageBox.information( self.iface.mainWindow(),"Info",
+            str('select feature for ' + str( unicode(layer.name().upper() ) ) ) )
+
+    def runValidation(self):
+        from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+        from matplotlib import pyplot
+        from descartes.patch import PolygonPatch
+        from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+        
+        #~ take input parameters fron GUI
+        rasterName = self.comboDEM.currentText()
+        self.rLayer = self.getLayerByName(rasterName)
+        nVsteps = self.nVsteps.value()
+        minVdep = self.minVdep.value()
+        profiler = ProfilerTool()
+        profiler.setRaster( self.rLayer )
+        layer = self.iface.activeLayer()
+        firstSlope = self.chbSlopeLim.isChecked()
+        nbIter = self.nbExSbox.value()
+        if layer.selectedFeatureCount() == 1:
+            depts = []
+            feat = layer.selectedFeatures()[0]
+            for i in range(nbIter):
+                profileList,e = profiler.doProfile(feat.geometry())
+                dept, err = mainFun(profileList,nVsteps,minVdep,firstSlope,Graph=0)
+                if err != 1:
+                    depts.append(dept)
+                else:
+                    depts.append(None)
+
+            """
+            Plot
+            """
+            fig = pyplot.figure(1, figsize=(4,3), dpi=300)
+            fig = pyplot.figure()
+            ax = fig.add_subplot(211)
+            ax.plot([i for i in range(nbIter)],depts)
+            ax.set_title('Detected hydraulic depths')
+            
+            #~ pyplot.show()
+            canvasPlot = FigureCanvas(fig)
+            canvasPlot.updateGeometry()
+            """
+            """
+            
+            self.clearLayout(self.layout_val)
+            toolbar = NavigationToolbar(canvasPlot,self.layout_val.widget())
+            #~ self.layout_plot.insertWidget(0, canvasPlot )
+            self.layout_val.addWidget( canvasPlot )
+            self.layout_val.addWidget( toolbar )
             #~ self.setLayout( self.layout_plot)
             
         else:
