@@ -255,6 +255,7 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
         from matplotlib import pyplot
         from descartes.patch import PolygonPatch
         from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+        from statistics import mean, stdev
         
         #~ take input parameters fron GUI
         rasterName = self.comboDEM.currentText()
@@ -280,9 +281,9 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
             """
             Plot
             """
-            fig = pyplot.figure(1, figsize=(4,3), dpi=300)
+            #fig = pyplot.figure(1, figsize=(4,3), dpi=300)
             fig = pyplot.figure()
-            ax = fig.add_subplot(211)
+            ax = fig.add_subplot(111)
             ax.plot([i for i in range(nbIter)],depts)
             ax.set_title('Detected hydraulic depths')
             
@@ -297,12 +298,43 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
             #~ self.layout_plot.insertWidget(0, canvasPlot )
             self.layout_val.addWidget( canvasPlot )
             self.layout_val.addWidget( toolbar )
+            table = QTableWidget(1,len(depts))
+            table.verticalHeader().hide()
+            for i in range(len(depts)):
+                item = QTableWidgetItem(str(round(depts[i],3)))
+                item.setFlags(item.flags() ^ Qt.ItemIsEditable)
+                table.setItem(0,i,item)
+            mind = round(min(depts),3)
+            maxd = round(max(depts),3)
+            meand = round(mean(depts),3)
+            stdevd = round(stdev(depts),3)
+            self.layout_val.addWidget( table )
+            save = QPushButton("Save")
+            save.clicked.connect(lambda : self.saveCSV(depts))
+            self.layout_val.addWidget(save)
+            self.layout_val.addWidget( QLabel("Min value : %s\nMax value : %s\nMean : %s\nStDev : %s"%(mind, maxd, meand, stdevd)) )
             #~ self.setLayout( self.layout_plot)
             
         else:
             QMessageBox.information( self.iface.mainWindow(),"Info",
             str('select feature for ' + str( unicode(layer.name().upper() ) ) ) )
-    
+
+    def saveCSV(self, table):
+        fname = QFileDialog.getSaveFileName(self, 'Save File', "record.csv","Text files (*.csv)")[0]
+        print(fname)
+        if fname:
+            try:
+                file = open(fname,'w')
+                csv = ""
+                for cell in table:
+                    csv += str(round(cell,3))
+                    csv += '\n'
+                csv = csv[:-1]
+                file.write(csv)
+                file.close()
+            except:
+                QMessageBox.critical(self.iface.mainWindow(),"Error","File couldn't be written.")
+
     def clearLayout(self, layout):
         if layout is not None:
             while layout.count():
