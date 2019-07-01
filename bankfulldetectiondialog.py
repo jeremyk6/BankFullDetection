@@ -320,13 +320,14 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
                 table.setItem(0,i,item)
             mind = round(min(depts),3)
             maxd = round(max(depts),3)
+            diff = round(maxd-mind,3)
             meand = round(mean(depts),3)
             stdevd = round(stdev(depts),3)
             self.layout_val.addWidget( table )
             save = QPushButton("Save")
             save.clicked.connect(lambda : self.saveCSV(depts))
             self.layout_val.addWidget(save)
-            self.layout_val.addWidget( QLabel("Min value : %s\nMax value : %s\nMean : %s\nStDev : %s"%(mind, maxd, meand, stdevd)) )
+            self.layout_val.addWidget( QLabel("Min value : %s\nMax value : %s\nMin max diff : %s\nMean : %s\nStDev : %s"%(mind, maxd, diff, meand, stdevd)) )
             #~ self.setLayout( self.layout_plot)
             
         else:
