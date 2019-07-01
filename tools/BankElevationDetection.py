@@ -41,7 +41,7 @@ def hdepth(polygon,h):
     b = box(minx, miny, maxx, h)
     return b
 
-def mainFun(pointList,nVsteps=100,minVdep=1,firstSlope=False,Graph=0):
+def mainFun(pointList,nVsteps=100,minVdep=1,maxMPdep=0,firstSlope=False,Graph=0):
     polygonXSorig = Polygon(pointList)
     #~ definition line of XS
     borderXS = LineString(pointList)
@@ -63,6 +63,13 @@ def mainFun(pointList,nVsteps=100,minVdep=1,firstSlope=False,Graph=0):
         wetArea = polygonXS.intersection(wdep)
         wetPerimeter=borderXS.intersection(wdep)
         wetWTLine = wdepLine.intersection(polygonXS)
+        if dept >= minY+maxMPdep and wetArea.type is 'MultiPolygon':
+            wetPolygon = wetArea
+            Area = 0
+            for polygon in wetPolygon:
+                if polygon.bounds[1]==minY:
+                    wetArea = polygon
+            wetWTLine = wetWTLine.intersection(wetArea)
         HydRad = np.append(HydRad,wetArea.area/wetPerimeter.length)
         HydDept = np.append(HydDept,wetArea.area/wetWTLine.length)
     
@@ -85,11 +92,12 @@ def mainFun(pointList,nVsteps=100,minVdep=1,firstSlope=False,Graph=0):
         count = 0
         for i in gradients[:-1]:
             count+=1
-            #if ((i>0) & (gradients[count]<0) & (i != gradients[count])):
-            if(((abs(gradients[count]-i)>0.015) or ((i>0) & (gradients[count]<0))) and (i != gradients[count])):
+            if i>0 and gradients[count]<0 and i != gradients[count]:
                 deptsLM.append(depts[count])
                 HydDeptLM.append(HydDept[count])
                 break
+        if len(deptsLM)==0:
+            error = True
 
     else:
         error, deptsLM, HydDeptLM , spar  = splineR(depts,HydDept)
@@ -122,21 +130,22 @@ def mainFun(pointList,nVsteps=100,minVdep=1,firstSlope=False,Graph=0):
         
 
     else:
+        err = 1
         bankfullLine = WTable(polygonXSorig,depts[-1])
         wdep=hdepth(polygonXSorig,depts[-1])
         dept = depts[-1]
     
     wetArea = polygonXS.intersection(wdep)
-    boundsOK = ()
-    Area = 0
     if wetArea.type is 'MultiPolygon':
         nchannel=str(len(wetArea))
-        for wetPolygon in wetArea:
-            if wetPolygon.area > Area:
-                Area = wetPolygon.area
-                boundsOK = wetPolygon.bounds
+        if dept >= minY+maxMPdep:
+            nchannel='1'
+            wetPolygon = wetArea
+            Area = 0
+            for polygon in wetPolygon:
+                if polygon.bounds[1]==polygonXS.bounds[1]:
+                    wetArea = polygon
     else:
-        boundsOK = wetArea.bounds
         nchannel='1'
     
     if Graph == 1:

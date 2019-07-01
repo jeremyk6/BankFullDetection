@@ -147,6 +147,7 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
         self.progressBar.setValue(i)
         nVsteps = self.nVsteps.value()
         minVdep = self.minVdep.value()
+        maxMPdep = self.maxMPdep.value()
 
         firstSlope = self.chbSlopeLim.isChecked()
 
@@ -158,7 +159,11 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
             geom = feat.geometry()
             profileList,e = profiler.doProfile(geom)
             self.iface.mainWindow().statusBar().showMessage( "Elaboro la sez "+str(i+1) )
-            dept, err = mainFun(profileList,nVsteps,minVdep,firstSlope,Graph=0)
+            err=0
+            try:
+                dept, err = mainFun(profileList,nVsteps,minVdep,maxMPdep,firstSlope,Graph=0)
+            except:
+                err=1
             if err == 1:
                 print("Valeur candidate inférieure à la profondeur min sur %s"%str(i+1))
                 nfeats -= 1
@@ -180,8 +185,15 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
 
         for i in range(nfeats):
             minY=lProfileP[i].bounds[1]
-            wetArea = lProfileP[i].intersection(hdepth(lProfileP[i],lDept[i]+minY))
-            #wetArea = lProfileP[i].intersection(hdepth(lProfileP[i],1+minY))
+            wetPolygon = lProfileP[i].intersection(hdepth(lProfileP[i],lDept[i]+minY))
+
+            wetArea = wetPolygon
+            if wetPolygon.type is 'MultiPolygon':
+                Area = 0
+                for polygon in wetPolygon:
+                    if polygon.bounds[1]==minY:
+                        wetArea = polygon
+
             startDis = wetArea.bounds[0]
             endDis = wetArea.bounds[2]
             if((lGeom[i].length()-endDis)<1) : endDis = lGeom[i].length() # rustine
@@ -230,6 +242,7 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
         self.rLayer = self.getLayerByName(rasterName)
         nVsteps = self.nVsteps.value()
         minVdep = self.minVdep.value()
+        maxMPdep = self.maxMPdep.value()
         profiler = ProfilerTool()
         profiler.setRaster( self.rLayer )
         layer = self.iface.activeLayer()
@@ -238,7 +251,7 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
             feat = layer.selectedFeatures()[0]
             geomSinXS = feat.geometry()
             profileList,e = profiler.doProfile(geomSinXS)
-            canvasPlot = mainFun(profileList,nVsteps,minVdep,firstSlope,Graph=1)
+            canvasPlot = mainFun(profileList,nVsteps,minVdep,maxMPdep,firstSlope,Graph=1)
             self.clearLayout(self.layout_plot)
             toolbar = NavigationToolbar(canvasPlot,self.layout_plot.widget())
             #~ self.layout_plot.insertWidget(0, canvasPlot )
@@ -262,6 +275,7 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
         self.rLayer = self.getLayerByName(rasterName)
         nVsteps = self.nVsteps.value()
         minVdep = self.minVdep.value()
+        maxMPdep = self.maxMPdep.value()
         profiler = ProfilerTool()
         profiler.setRaster( self.rLayer )
         layer = self.iface.activeLayer()
@@ -272,7 +286,7 @@ class BankFullDetectionDialog(QDialog, Ui_BankFullDetection):
             feat = layer.selectedFeatures()[0]
             for i in range(nbIter):
                 profileList,e = profiler.doProfile(feat.geometry())
-                dept, err = mainFun(profileList,nVsteps,minVdep,firstSlope,Graph=0)
+                dept, err = mainFun(profileList,nVsteps,minVdep,maxMPdep,firstSlope,Graph=0)
                 if err != 1:
                     depts.append(dept)
                 else:
